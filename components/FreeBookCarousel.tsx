@@ -16,7 +16,8 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
   const [loading, setLoading] = useState(true)
   const scrollViewRef = useRef<ScrollView>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
-   const borderColor = useThemeColor({}, 'tint');
+  const borderColor = useThemeColor({}, 'tint');
+  const textColor = useThemeColor({}, 'text');
 
   useEffect(() => {
     const fetchFreeBooks = async () => {
@@ -40,7 +41,7 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
         const nextIndex = (currentIndex + 1) % freeBooks.length
         scrollToIndex(nextIndex)
       }
-    }, 3000) // Cambia de libro cada 3 segundos
+    }, 3000)
 
     return () => clearInterval(autoScroll)
   }, [currentIndex, freeBooks])
@@ -69,16 +70,16 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
   }
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />
+    return <ActivityIndicator size="large" color={borderColor} />
   }
 
   if (freeBooks.length === 0) {
-    return <ThemedText type="default">No se encontraron libros gratuitos.</ThemedText>
+    return <ThemedText darkColor={textColor} lightColor={textColor} type="default">No se encontraron libros gratuitos.</ThemedText>
   }
 
   return (
     <View style={styles.container}>
-      <ThemedText type="subtitle" style={styles.title}>
+      <ThemedText type="title" darkColor={textColor} lightColor={textColor} style={styles.title}>
         Libros para leer online
       </ThemedText>
       <br/>
@@ -98,7 +99,7 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
           {freeBooks.map((book) => (
             <TouchableOpacity key={book.key} onPress={() => onSelectBook(book)} style={styles.bookItem}>
               <BookItem
-                title={book.title.length > 20 ? `${book.title.slice(0, 20)}...` : book.title} // Acortar título
+                title={book.title.length > 20 ? `${book.title.slice(0, 20)}...` : book.title} 
                 author={book.author_name ? (book.author_name.join(", ").length > 20 ? `${book.author_name.join(", ").slice(0, 20)}...` : book.author_name.join(", ")) : 'Autor desconocido'}
                 coverUrl={book.cover_i}
                 bookKey={book.key}

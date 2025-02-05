@@ -1,22 +1,24 @@
 // Definimos el color de resaltado (tint)
-const tintColorLight = '#ed8772';
+const tintColorLight = '#4682B4';
 const tintColorDark = '#ffcf65';
 
 export const Colors = {
   light: {
     text: '#212121',
-    background: '#fff',
+    background: '#E0E0E0',
     tint: tintColorLight,
-    icon: '#c890a7',
-    tabIconDefault: '#a35c7a',
+    content: '#fffdfa',
+    icon: '#fff',
+    tabIconDefault: '#000',
     tabIconSelected: tintColorLight,
   },
   dark: {
-    text: '#ECEDEE',
+    text: '#fffdfa',
     background: '#212121',
     tint: tintColorDark,
-    icon: '#c890a7',
-    tabIconDefault: '#a35c7a',
+    content: '#262626',
+    icon: '#232323',
+    tabIconDefault: '#fff',
     tabIconSelected: tintColorDark,
   },
 };

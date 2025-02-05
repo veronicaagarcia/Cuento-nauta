@@ -13,17 +13,19 @@ type BookItemProps = {
   editionCount?: number;
   description?: string;
   onPress: () => void;
-  style?: object; // Propiedad para estilos adicionales
+  style?: object; 
   imageStyle?: object;
 };
 
 const BookItem: React.FC<BookItemProps> = ({ title, author, coverUrl, bookKey, firstPublishYear, editionCount, description, onPress, style, imageStyle}) => {
-  const backgroundColor = useThemeColor({}, 'tabIconDefault');
+  const backgroundColor = useThemeColor({}, 'content');
   const placeholderColor = useThemeColor({}, 'tint');
+  const textColor = useThemeColor({}, 'text');
+  const secondText = useThemeColor({}, 'tint');
 
   return (
     <TouchableOpacity onPress={onPress}>
-      <ThemedView darkColor='#c890a7' lightColor='#a35c7a' style={[styles.ViewShadow, style]}>
+      <ThemedView darkColor={backgroundColor} lightColor={backgroundColor} style={[styles.ViewShadow, style]}>
         {coverUrl ? (
           <Image
             source={{ uri: coverUrl }}
@@ -31,27 +33,27 @@ const BookItem: React.FC<BookItemProps> = ({ title, author, coverUrl, bookKey, f
           />
         ) : (
           <View style={[styles.image, styles.placeholder, { backgroundColor: placeholderColor }]}>
-            <ThemedText type="default">Sin imagen</ThemedText>
+            <ThemedText darkColor={textColor} lightColor={textColor} type="default">Sin imagen</ThemedText>
           </View>
         )}
         <View style={styles.info}>
-          <ThemedText type="subtitle" darkColor='#212121' lightColor='#fff'>{title}</ThemedText>
-          <ThemedText type="default">{author || 'Autor desconocido'}</ThemedText>
+          <ThemedText type="subtitle" darkColor={secondText} lightColor={secondText}>{title}</ThemedText>
+          <ThemedText type="default" darkColor={textColor} lightColor={textColor}>{author || 'Autor desconocido'}</ThemedText>
           <Text>
           {
           firstPublishYear 
-          && <ThemedText type="default" style={{textDecorationLine:'underline', fontSize: 13}}>Publicado en: {firstPublishYear}</ThemedText>
+          && <ThemedText type="default" darkColor={textColor} lightColor={textColor} style={{textDecorationLine:'underline', fontSize: 13}}>Publicado en: {firstPublishYear}</ThemedText>
           }
           </Text>
           <Text>
           {
           editionCount 
-          && <ThemedText type="default" style={{fontSize: 12}}>Ediciones: {editionCount}</ThemedText>
+          && <ThemedText type="default" darkColor={textColor} lightColor={textColor} style={{fontSize: 12}}>Ediciones: {editionCount}</ThemedText>
           }
           </Text>
           <Text>
           {description && 
-          <ThemedText type="default" lightColor='#fff' darkColor='#212121'>{description.slice(0, 90)}...</ThemedText>
+          <ThemedText type="default" darkColor={textColor} lightColor={textColor}>{description.slice(0, 90)}...</ThemedText>
           }
           </Text>
         </View>

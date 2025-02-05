@@ -1,27 +1,35 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, useColorScheme } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import HomeSearchBook from '@/components/HomeSearchBook';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function HomeScreen() {
+  const headerColor = useThemeColor({}, 'tint');
+  const backgroundColor = useThemeColor({}, 'background');
+  const colorScheme = useColorScheme();
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#c890a7', dark: '#a35c7a' }}
+      headerBackgroundColor={{ light: headerColor, dark: headerColor }}
       headerImage={<>
         <Animatable.Image
           animation="jello"
           iterationCount={5}
           duration={2000}
           direction="alternate"
-          source={require('@/assets/images/Logobg.png')}
+          source={
+            colorScheme === 'dark'
+              ? require('@/assets/images/destacado.png') // Imagen para dark mode
+              : require('@/assets/images/destacado-light.png') // Imagen para light mode
+          }
           style={styles.reactLogo}
         />
-        <Text style={styles.titleContainer}>Descubre nuevas historias</Text>      
       </>}
     >
       <View style={styles.contentContainer}>
+        <Text style={[{ color: headerColor }, styles.titleContainer]}>DESCUBRE NUEVAS HISTORIAS</Text>      
         <HomeSearchBook />
       </View>
     </ParallaxScrollView>
@@ -36,17 +44,17 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   reactLogo: {
-    height: 200,
-    width: 200,
-    borderRadius: 100,
-    margin: 'auto',
+    height: 500,
+    width: '100%',
+    objectFit: 'cover',
+    position: 'absolute',
+    top: -125
   },
   titleContainer: {
     fontSize: 18,
     margin: 'auto',
     fontFamily: 'cursive',
     fontStyle: 'italic',
-    color: '#212121',
     marginBottom: 12
   },
 });

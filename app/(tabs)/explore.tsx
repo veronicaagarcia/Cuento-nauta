@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, FlatList} from 'react-native';
+import { StyleSheet, View, FlatList, useColorScheme } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import * as Animatable from 'react-native-animatable';
 import { ThemedText } from '@/components/ThemedText';
@@ -8,11 +8,15 @@ import BookItem from '@/components/BookItem';
 import BookDetail from '@/components/BookDetail';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedView } from '@/components/ThemedView';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function TabTwoScreen() {
   const [favoriteBooks, setFavoriteBooks] = useState<BookWithStatus[]>([]);
   const [selectedBook, setSelectedBook] = useState<BookWithStatus | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
+  const colorScheme = useColorScheme();
+  const headerColor = useThemeColor({}, 'tint');
+  const textColor = useThemeColor({}, 'text');
 
   useEffect(() => {
     loadFavoriteBooks();
@@ -43,14 +47,18 @@ export default function TabTwoScreen() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
+      headerBackgroundColor={{ light: headerColor, dark: headerColor }}
       headerImage={
         <Animatable.Image
           animation="wobble"
           iterationCount={2}
           duration={2000}
           direction="alternate"
-          source={require('@/assets/images/destacado.png')}
+          source={
+            colorScheme === 'dark'
+              ? require('@/assets/images/destacadoLibros.png') 
+              : require('@/assets/images/destacadoLibros-light.png') 
+          }
           style={styles.headerImage}
         />
       }>
@@ -63,12 +71,12 @@ export default function TabTwoScreen() {
           />
         ) : (
           <>
-            <ThemedText type="title" lightColor='#ed8772' darkColor='#ffcf65' style={styles.title}>Tus libros favoritos</ThemedText>
+            {/* <ThemedText type="title" lightColor={headerColor} darkColor={headerColor} style={styles.title}>Tus libros favoritos</ThemedText> */}
             <View style={styles.filterButtons}>
-              <ThemedButton title="Por leer" onPress={() => setFilter('Por leer')} />
-              <ThemedButton title="Leyendo" onPress={() => setFilter('Leyendo')} />
-              <ThemedButton title="Leídos" onPress={() => setFilter('Leído')} />
-              <ThemedButton title="No establecido" onPress={() => setFilter(null)} />
+              <ThemedButton textLightColor={textColor} textDarkColor={textColor} title="Por leer" onPress={() => setFilter('Por leer')} />
+              <ThemedButton textLightColor={textColor} textDarkColor={textColor} title="Leyendo" onPress={() => setFilter('Leyendo')} />
+              <ThemedButton textLightColor={textColor} textDarkColor={textColor} title="Leídos" onPress={() => setFilter('Leído')} />
+              <ThemedButton textLightColor={textColor} textDarkColor={textColor} title="No establecido" onPress={() => setFilter(null)} />
             </View>
             <FlatList
               data={filteredBooks}
@@ -87,21 +95,21 @@ export default function TabTwoScreen() {
                   />
                   <ThemedView style={{flexDirection: 'row', justifyContent: 'center'}}>
                     <ThemedButton
-                      lightColor="#e91111"
-                      darkColor="#e91111"
-                      textLightColor="#000"
-                      textDarkColor="#FFF"
+                      lightColor="#E63946"
+                      darkColor="#E63946"
+                      textLightColor={textColor}
+                      textDarkColor={textColor}
                       title="Eliminar"
                       onPress={() => handleRemoveBook(item.key)}
                     />
                   </ThemedView>
-                  <ThemedText type="default" style={styles.statusText}>
+                  <ThemedText type="default"  style={[styles.statusText, { color: textColor }]}>
                     Estado: {item.readingStatus || 'No establecido'}
                   </ThemedText>
                 </View>
               )}
               ListEmptyComponent={
-                <ThemedText type="subtitle" style={styles.emptyText}>
+                <ThemedText type="subtitle" style={[styles.emptyText, { color: textColor }]}>
                   No tienes libros en esta categoría.
                 </ThemedText>
               }

@@ -19,7 +19,10 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook }) =
   const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([])
   const [currentBook, setCurrentBook] = useState<Book>(book)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  const textColor = useThemeColor({}, 'tint');
+  const arrowColor = useThemeColor({}, 'tint');
+  const buttonColor = useThemeColor({}, 'content');
+  const textColor = useThemeColor({}, 'text');
+  const secondText = useThemeColor({}, 'tint');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +47,7 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook }) =
   const handleSaveBook = async () => {
     await saveBookToList(currentBook, 'favoritos');
     setSaveMessage('Libro guardado en favoritos');
-    setTimeout(() => setSaveMessage(null), 3000); // El mensaje desaparecerá después de 3 segundos
+    setTimeout(() => setSaveMessage(null), 3000);
   };
 
   const handleStatusChange = async (status: ReadingStatus) => {
@@ -77,51 +80,52 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook }) =
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <ThemedButton
-        style={{borderRadius:100}}
-        lightColor="#a35c7a"
-        darkColor="#836190"
-        textLightColor="#fff"
-        textDarkColor="#fff" 
+        style={{borderRadius: 100, borderWidth: 2, borderColor: textColor, position: 'absolute', left: 0, top: 0, marginBottom: 4}}
+        lightColor={buttonColor}
+        darkColor={buttonColor}
+        textLightColor={arrowColor}
+        textDarkColor={arrowColor} 
         title="🢀" 
         onPress={onBack} 
       />
       <br/>
       {currentBook.cover_i && <Image source={{ uri: currentBook.cover_i }} style={styles.image} />}
       <View style={styles.titleContainer}>
-        <ThemedText type="title">{currentBook.title}</ThemedText>
-        <ThemedText type="title">-</ThemedText>
-        <ThemedText type="default">{currentBook.author_name?.join(', ') || 'Autor desconocido'}</ThemedText>
+        <ThemedText darkColor={secondText} lightColor={secondText} type="title">{currentBook.title}</ThemedText>
+        <ThemedText darkColor={textColor} lightColor={textColor} type="title">-</ThemedText>
+        <ThemedText darkColor={textColor} lightColor={textColor} type="default">{currentBook.author_name?.join(', ') || 'Autor desconocido'}</ThemedText>
       </View>
       
       {currentBook.first_publish_year && (
-        <ThemedText type="default" style={styles.publishYear}>
+        <ThemedText type="default" darkColor={textColor} lightColor={textColor} style={styles.publishYear}>
           Publicado en: {currentBook.first_publish_year}
         </ThemedText>
       )}
       {currentBook.edition_count && (
-        <ThemedText type="default">Ediciones: {currentBook.edition_count}</ThemedText>
+        <ThemedText darkColor={textColor} lightColor={textColor} type="default">Ediciones: {currentBook.edition_count}</ThemedText>
       )}
       <View style={styles.descriptionContainer}>
-        <ThemedText type="default">{currentBook.description}</ThemedText>
+        <ThemedText darkColor={textColor} lightColor={textColor} type="default">{currentBook.description}</ThemedText>
       </View>
       
       <View style={styles.actionContainer}>
-        <ThemedText type='subtitle' style={{ color: textColor }}>Definir o actualizar estado del libro</ThemedText>
+        <ThemedText type='subtitle' style={{ color: arrowColor }}>Definir o actualizar estado del libro</ThemedText>
         <Picker
+          selectionColor={arrowColor}
           selectedValue={currentBook.readingStatus}
           style={styles.picker}
           onValueChange={(itemValue) => handleStatusChange(itemValue as ReadingStatus)}
         >
-          <Picker.Item label="Estado de lectura" value={undefined} />
-          <Picker.Item label="Por leer" value="Por leer" />
-          <Picker.Item label="Leyendo" value="Leyendo" />
-          <Picker.Item label="Leído" value="Leído" />
+          <Picker.Item color={buttonColor} label="Estado de lectura" value={undefined} />
+          <Picker.Item color={buttonColor} label="Por leer" value="Por leer" />
+          <Picker.Item color={buttonColor} label="Leyendo" value="Leyendo" />
+          <Picker.Item color={buttonColor} label="Leído" value="Leído" />
         </Picker>
         <ThemedButton 
-          lightColor="#6B4E78"
-          darkColor="#836190"
-          textLightColor="#000"
-          textDarkColor="#FFF" 
+          lightColor={buttonColor}
+          darkColor={buttonColor}
+          textLightColor={textColor}
+          textDarkColor={textColor} 
           title="Guardar en favoritos" 
           onPress={handleSaveBook} 
         />
@@ -131,20 +135,20 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook }) =
           <ActivityIndicator size="large" />
         ) : currentBook.isFullyAccessible && currentBook.previewLink ? (
           <ThemedButton
-            lightColor="#ed8772"
-            darkColor="#ffcf65"
-            textLightColor="#000"
-            textDarkColor="#FFF"
+            lightColor={arrowColor}
+            darkColor={arrowColor}
+            textLightColor={textColor}
+            textDarkColor={textColor}
             title="Leer en línea"
             onPress={handleReadOnline}
           />
         ) : (
-          <ThemedText type="default">Este libro no está disponible para lectura gratuita en línea.</ThemedText>
+          <ThemedText style={{ color: textColor }} type="default">Este libro no está disponible para lectura gratuita en línea.</ThemedText>
         )}
       </View>
       
       <ThemedView style={styles.containerAuthor}>
-        <ThemedText type="subtitle">Libros del mismo autor</ThemedText>
+        <ThemedText style={{ color: secondText }} type="subtitle">Libros del mismo autor</ThemedText>
         <br/>
         {recommendedBooks.map((recBook) => (
           <BookItem
@@ -168,6 +172,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     alignItems: 'center',
+    position: 'relative'
   },
   image: {
     width: 200,
@@ -200,7 +205,7 @@ const styles = StyleSheet.create({
   },
   saveMessage: {
     marginTop: 10,
-    color: 'green',
+    color: '#4CAF50',
   },
   picker: {
     paddingHorizontal: 12,

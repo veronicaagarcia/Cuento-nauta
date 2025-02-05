@@ -26,9 +26,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSearch}) =
         // onSubmitEditing={onSearch}
       />
       <ThemedButton 
-      darkColor='#836190'
-      lightColor='#ed8772'
-      textDarkColor='#fff'
+      darkColor={borderColor}
+      lightColor={borderColor}
+      textDarkColor={backgroundColor}
+      textLightColor={backgroundColor}
       title="Buscar" 
       onPress={onSearch} 
       style={{position: 'absolute', right: 8, bottom: 7}} />

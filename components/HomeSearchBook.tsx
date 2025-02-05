@@ -93,7 +93,7 @@ const HomeSearchBook: React.FC<HomeSearchBookProps> = ({ initialBook }) => {
             />
           )}
           ListEmptyComponent={
-            <ThemedText type="subtitle" style={styles.emptyText}>
+            <ThemedText type="subtitle" darkColor={textColor} lightColor={textColor} style={styles.emptyText}>
               {hasSearched ? 'No se encontraron libros.' : 'Realiza una búsqueda.'}
             </ThemedText>
           }
