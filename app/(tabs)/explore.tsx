@@ -3,7 +3,7 @@ import { StyleSheet, View, FlatList, useColorScheme } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import * as Animatable from 'react-native-animatable';
 import { ThemedText } from '@/components/ThemedText';
-import { getBookList, removeBookFromList, BookWithStatus } from '@/services/api';
+import { getBookList, removeBookFromList, BookWithStatus, Book } from '@/services/api';
 import BookItem from '@/components/BookItem';
 import BookDetail from '@/components/BookDetail';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -65,10 +65,13 @@ export default function TabTwoScreen() {
       <View style={styles.contentContainer}>
        {selectedBook ? (
           <BookDetail 
-            book={selectedBook} 
+            book={selectedBook}
             onBack={handleBackToList}
-            onSelectBook={handleSelectBook}
-          />
+            onSelectBook={handleSelectBook} onAddToFavorites={function (book: Book): Promise<void> {
+              throw new Error('Function not implemented.');
+            } } onRemoveFromFavorites={function (bookKey: string): Promise<void> {
+              throw new Error('Function not implemented.');
+            } }          />
         ) : (
           <>
             {/* <ThemedText type="title" lightColor={headerColor} darkColor={headerColor} style={styles.title}>Tus libros favoritos</ThemedText> */}

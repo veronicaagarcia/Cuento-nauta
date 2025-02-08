@@ -13,6 +13,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSearch}) =
   const borderColor = useThemeColor({}, 'tint');
   const backgroundColor = useThemeColor({}, 'icon');
   const textColor = useThemeColor({}, 'text');
+  const buttonColor = useThemeColor({}, 'button');
 
   return (
     <View style={styles.container}>
@@ -26,12 +27,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSearch}) =
         // onSubmitEditing={onSearch}
       />
       <ThemedButton 
-      darkColor={borderColor}
-      lightColor={borderColor}
+      darkColor={buttonColor}
+      lightColor={buttonColor}
       textDarkColor={backgroundColor}
       textLightColor={backgroundColor}
       title="Buscar" 
-      onPress={onSearch} 
+      onPress={() => onSearch()} 
       style={{position: 'absolute', right: 8, bottom: 7}} />
     </View>
   );

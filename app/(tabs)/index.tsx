@@ -7,13 +7,12 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function HomeScreen() {
   const headerColor = useThemeColor({}, 'tint');
-  const backgroundColor = useThemeColor({}, 'background');
   const colorScheme = useColorScheme();
 
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: headerColor, dark: headerColor }}
-      headerImage={<>
+      headerImage={
         <Animatable.Image
           animation="jello"
           iterationCount={5}
@@ -21,12 +20,12 @@ export default function HomeScreen() {
           direction="alternate"
           source={
             colorScheme === 'dark'
-              ? require('@/assets/images/destacado.png') // Imagen para dark mode
-              : require('@/assets/images/destacado-light.png') // Imagen para light mode
+              ? require('@/assets/images/destacado.png') 
+              : require('@/assets/images/destacado-light.png') 
           }
           style={styles.reactLogo}
         />
-      </>}
+      }
     >
       <View style={styles.contentContainer}>
         <Text style={[{ color: headerColor }, styles.titleContainer]}>DESCUBRE NUEVAS HISTORIAS</Text>      

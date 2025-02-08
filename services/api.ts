@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MY_API_KEY } from "../config"
 
-// Clave de API real de Google
-const MY_API_KEY = 'AIzaSyBuOnHIBhlBIZlu2cgpLM-9SFEQ1uTIqqc';
-
+export type ReadingStatus = "Leído" | "Por leer" | "Leyendo"
 export type Book = {
   bookKey?: string | null | undefined;
   key: string;
@@ -15,6 +14,9 @@ export type Book = {
   isFullyAccessible?: boolean;
   previewLink?: string;
   readingStatus?: ReadingStatus
+};
+export type BookWithStatus = Book & {
+  readingStatus?: ReadingStatus;
 };
 
 // limpia etiquetas html, espacios en blanco y pone saltos en linea
@@ -38,65 +40,122 @@ const cleanAndFormatDescription = (description: string): string => {
 };
 
 // Busca libros de acuerdo a lo q escriba el usuario en el buscador 
+// export const searchBooks = async (query: string): Promise<Book[]> => {
+
+//   const response = await fetch(
+//     `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${MY_API_KEY}`,
+//   )
+
+//   if (!response.ok) {
+//     throw new Error(`Error en la solicitud: ${response.statusText}`)
+//   }
+//   const data = await response.json()
+
+//   return data.items.map((item: any) => ({
+//     key: item.id,
+//     title: item.volumeInfo.title,
+//     author_name: item.volumeInfo.authors,
+//     cover_i: item.volumeInfo.imageLinks?.thumbnail,
+//     first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
+//     edition_count: item.volumeInfo.industryIdentifiers?.length,
+//     description: cleanAndFormatDescription(item.volumeInfo.description || ""),
+//     isFullyAccessible: item.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
+//     previewLink: item.accessInfo.webReaderLink,
+//   }))
+// }
 export const searchBooks = async (query: string): Promise<Book[]> => {
+  const resultsPerPage = 10
+  const totalResults = 50
+  const orderBy = "relevance"
+  let books: Book[] = []
 
-  const response = await fetch(
-    `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${MY_API_KEY}`,
-  )
+  try {
+    for (let startIndex = 0; startIndex < totalResults; startIndex += resultsPerPage) {
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=${resultsPerPage}&startIndex=${startIndex}&orderBy=${orderBy}&key=${MY_API_KEY}`,
+      )
 
-  if (!response.ok) {
-    throw new Error(`Error en la solicitud: ${response.statusText}`)
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      if (!data.items || data.items.length === 0) {
+        console.warn("No se encontraron más libros en esta página de resultados")
+        break // Salimos del bucle si no hay más resultados
+      }
+
+      const fetchedBooks = data.items.map((item: any) => ({
+        key: item.id,
+        title: item.volumeInfo.title,
+        author_name: item.volumeInfo.authors,
+        cover_i: item.volumeInfo.imageLinks?.thumbnail,
+        first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
+        edition_count: item.volumeInfo.industryIdentifiers?.length,
+        description: cleanAndFormatDescription(item.volumeInfo.description || ""),
+        isFullyAccessible: item.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
+        previewLink: item.accessInfo.webReaderLink,
+      }))
+
+      books = [...books, ...fetchedBooks]
+    }
+
+    console.log(`Total de libros encontrados: ${books.length}`)
+    return books
+  } catch (error) {
+    console.error("Error al buscar libros para leer en línea:", error)
+    throw error
   }
-  const data = await response.json()
 
-  return data.items.map((item: any) => ({
-    key: item.id,
-    title: item.volumeInfo.title,
-    author_name: item.volumeInfo.authors,
-    cover_i: item.volumeInfo.imageLinks?.thumbnail,
-    first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
-    edition_count: item.volumeInfo.industryIdentifiers?.length,
-    description: cleanAndFormatDescription(item.volumeInfo.description || ""),
-    isFullyAccessible: item.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
-    previewLink: item.accessInfo.webReaderLink,
-  }))
 }
 
 // busca por leer on line
 export const searchBooksReadOnLine = async (): Promise<Book[]> => {
- const resultsPerPage = 40;
-  const totalResults = 120;
-  const query = "free-ebooks best sellers novels"; // Ajustar la consulta para obtener novelas populares
-  const orderBy = "relevance"; // Ordenar por relevancia
-  let books: Book[] = [];
+  const resultsPerPage = 40
+  const totalResults = 120
+  const query = "subject:fiction" // Cambiamos la consulta para obtener libros de ficción
+  const orderBy = "relevance" // Mantenemos el orden por relevancia
+  let books: Book[] = []
 
-  for (let startIndex = 0; startIndex < totalResults; startIndex += resultsPerPage) {
-    const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=${resultsPerPage}&startIndex=${startIndex}&filter=free-ebooks&orderBy=${orderBy}&printType=books&key=${MY_API_KEY}`
-    );
+  try {
+    for (let startIndex = 0; startIndex < totalResults; startIndex += resultsPerPage) {
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=${resultsPerPage}&startIndex=${startIndex}&filter=free-ebooks&orderBy=${orderBy}&printType=books&key=${MY_API_KEY}`,
+      )
 
-    if (!response.ok) {
-      throw new Error(`Error en la solicitud: ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`Error en la solicitud: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      if (!data.items || data.items.length === 0) {
+        console.warn("No se encontraron más libros en esta página de resultados")
+        break // Salimos del bucle si no hay más resultados
+      }
+
+      const fetchedBooks = data.items.map((item: any) => ({
+        key: item.id,
+        title: item.volumeInfo.title,
+        author_name: item.volumeInfo.authors,
+        cover_i: item.volumeInfo.imageLinks?.thumbnail,
+        first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
+        edition_count: item.volumeInfo.industryIdentifiers?.length,
+        description: cleanAndFormatDescription(item.volumeInfo.description || ""),
+        isFullyAccessible: item.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
+        previewLink: item.accessInfo.webReaderLink,
+      }))
+
+      books = [...books, ...fetchedBooks]
     }
 
-    const data = await response.json();
-    const fetchedBooks = data.items.map((item: any) => ({
-      key: item.id,
-      title: item.volumeInfo.title,
-      author_name: item.volumeInfo.authors,
-      cover_i: item.volumeInfo.imageLinks?.thumbnail,
-      first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
-      edition_count: item.volumeInfo.industryIdentifiers?.length,
-      description: cleanAndFormatDescription(item.volumeInfo.description || ""),
-      isFullyAccessible: item.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
-      previewLink: item.accessInfo.webReaderLink,
-    }));
-
-    books = [...books, ...fetchedBooks];
+    console.log(`Total de libros encontrados: ${books.length}`)
+    return books
+  } catch (error) {
+    console.error("Error al buscar libros para leer en línea:", error)
+    throw error
   }
+}
 
-  return books;
-};
 
 // Trae mas info como la descripcion del libro
 export const getBookDetails = async (bookId: string): Promise<Book> => {
@@ -106,7 +165,7 @@ export const getBookDetails = async (bookId: string): Promise<Book> => {
     throw new Error(`Error en la solicitud: ${response.statusText}`);
   }
   const data = await response.json();
-  console.log(data.accessInfo.accessViewStatus)
+  
   return {
     key: data.id,
     title: data.volumeInfo.title,
@@ -140,13 +199,6 @@ export const getRecommendedBooks = async (bookId: string): Promise<Book[]> => {
       edition_count: item.volumeInfo.industryIdentifiers?.length,
       description: item.volumeInfo.description,
     }));
-};
-
-// Estatus de libros
-export type ReadingStatus = 'Leído' | 'Por leer' | 'Leyendo';
-
-export type BookWithStatus = Book & {
-  readingStatus?: ReadingStatus;
 };
 
 // Actualiza el estado de lectura de un libro

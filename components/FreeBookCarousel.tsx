@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react"
 import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native"
 import { ThemedText } from "@/components/ThemedText"
 import { searchBooksReadOnLine, type Book } from "@/services/api"
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from "@/hooks/useThemeColor"
 import BookItem from "./BookItem"
 import { IconSymbol } from "@/components/ui/IconSymbol"
 
@@ -14,19 +14,26 @@ type FreeBookCarouselProps = {
 const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => {
   const [freeBooks, setFreeBooks] = useState<Book[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const scrollViewRef = useRef<ScrollView>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const borderColor = useThemeColor({}, 'tint');
-  const textColor = useThemeColor({}, 'text');
+  const borderColor = useThemeColor({}, "tint")
+  const textColor = useThemeColor({}, "text")
 
   useEffect(() => {
     const fetchFreeBooks = async () => {
       try {
+        setLoading(true)
+        setError(null)
         const books = await searchBooksReadOnLine()
-        const filteredBooks = books.filter((book) => book.isFullyAccessible)
-        setFreeBooks(filteredBooks)
+        if (books.length === 0) {
+          setError("No se encontraron libros gratuitos.")
+        } else {
+          setFreeBooks(books)
+        }
       } catch (error) {
         console.error("Error fetching free books:", error)
+        setError("Error al cargar los libros gratuitos.")
       } finally {
         setLoading(false)
       }
@@ -36,15 +43,15 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
   }, [])
 
   useEffect(() => {
-    const autoScroll = setInterval(() => {
-      if (freeBooks.length > 0) {
+    if (freeBooks.length > 0) {
+      const autoScroll = setInterval(() => {
         const nextIndex = (currentIndex + 1) % freeBooks.length
         scrollToIndex(nextIndex)
-      }
-    }, 3000)
+      }, 3000)
 
-    return () => clearInterval(autoScroll)
-  }, [currentIndex, freeBooks])
+      return () => clearInterval(autoScroll)
+    }
+  }, [currentIndex, freeBooks.length])
 
   const scrollToIndex = (index: number) => {
     if (scrollViewRef.current) {
@@ -73,8 +80,20 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
     return <ActivityIndicator size="large" color={borderColor} />
   }
 
+  if (error) {
+    return (
+      <ThemedText darkColor={textColor} lightColor={textColor} type="default">
+        {error}
+      </ThemedText>
+    )
+  }
+
   if (freeBooks.length === 0) {
-    return <ThemedText darkColor={textColor} lightColor={textColor} type="default">No se encontraron libros gratuitos.</ThemedText>
+    return (
+      <ThemedText darkColor={textColor} lightColor={textColor} type="default">
+        No se encontraron libros gratuitos.
+      </ThemedText>
+    )
   }
 
   return (
@@ -82,7 +101,6 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
       <ThemedText type="title" darkColor={textColor} lightColor={textColor} style={styles.title}>
         Libros para leer online
       </ThemedText>
-      <br/>
       <View style={styles.carouselContainer}>
         <TouchableOpacity style={styles.arrowButton} onPress={handlePrevious}>
           <IconSymbol name="chevron.left" size={24} color={borderColor} />
@@ -99,8 +117,14 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
           {freeBooks.map((book) => (
             <TouchableOpacity key={book.key} onPress={() => onSelectBook(book)} style={styles.bookItem}>
               <BookItem
-                title={book.title.length > 20 ? `${book.title.slice(0, 20)}...` : book.title} 
-                author={book.author_name ? (book.author_name.join(", ").length > 20 ? `${book.author_name.join(", ").slice(0, 20)}...` : book.author_name.join(", ")) : 'Autor desconocido'}
+                title={book.title.length > 20 ? `${book.title.slice(0, 20)}...` : book.title}
+                author={
+                  book.author_name
+                    ? book.author_name.join(", ").length > 15
+                      ? `${book.author_name.join(", ").slice(0, 15)}...`
+                      : book.author_name.join(", ")
+                    : "Autor desconocido"
+                }
                 coverUrl={book.cover_i}
                 bookKey={book.key}
                 onPress={() => onSelectBook(book)}
@@ -123,16 +147,17 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     width: "100%",
     maxWidth: 800,
-    height:'auto'
+    height: "auto",
   },
   title: {
     marginBottom: 10,
     fontWeight: "bold",
-    margin: 'auto'
+    textAlign: "center",
   },
   carouselContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: 'center'
   },
   scrollView: {
     flexGrow: 0,
@@ -141,25 +166,24 @@ const styles = StyleSheet.create({
     width: 200,
     marginHorizontal: 5,
   },
-  bookItemCard:{
-    alignContent:'center',
-    alignItems: 'center',
-    width:'100%',
-    height:300,
+  bookItemCard: {
+    alignContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: 300,
     borderRadius: 8,
-    flexDirection: 'column'
-    
+    flexDirection: "column",
+    justifyContent: 'center',
+    margin: 'auto'
   },
   arrowButton: {
     padding: 10,
   },
-  largeImage:{
-    width:160,
-    margin:'auto',
-    height: 210
-  }
+  largeImage: {
+    width: 160,
+    margin: "auto",
+    height: 210,
+  },
 })
 
 export default FreeBookCarousel
-
-

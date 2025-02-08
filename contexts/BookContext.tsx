@@ -1,5 +1,7 @@
+"use client"
+
 import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
 import {
   type Book,
   type BookWithStatus,
@@ -16,6 +18,10 @@ interface BookContextType {
   removeFavoriteBook: (bookKey: string) => Promise<void>
   updateBookReadingStatus: (bookKey: string, status: ReadingStatus) => Promise<void>
   refreshFavoriteBooks: () => Promise<void>
+  toggleFavorite: (book: Book) => Promise<void>
+  isFavorite: (bookKey: string) => boolean
+  error: string | null
+  clearError: () => void
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined)
@@ -30,29 +36,70 @@ export const useBookContext = () => {
 
 export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [favoriteBooks, setFavoriteBooks] = useState<BookWithStatus[]>([])
+  const [error, setError] = useState<string | null>(null)
 
-  const refreshFavoriteBooks = async () => {
-    const books = await getBookList("favoritos")
-    setFavoriteBooks(books)
-  }
+  // obtiene libros en favoritos
+  const refreshFavoriteBooks = useCallback(async () => {
+    try {
+      const books = await getBookList("favoritos")
+      setFavoriteBooks(books)
+    } catch (error) {
+      setError("Error al cargar los libros favoritos. Por favor, inténtalo de nuevo.")
+    }
+  }, [])
 
+  // carga libros en favoritos al iniciar, y cada vez q se actualiza la lista
   useEffect(() => {
     refreshFavoriteBooks()
-  }, [refreshFavoriteBooks]) // Added refreshFavoriteBooks to the dependency array
+  }, [refreshFavoriteBooks])
 
+  // agrega libro a favoritos
   const addFavoriteBook = async (book: Book) => {
-    await saveBookToList(book as BookWithStatus, "favoritos")
-    await refreshFavoriteBooks()
+    try {
+      await saveBookToList(book as BookWithStatus, "favoritos")
+      await refreshFavoriteBooks()
+    } catch (error) {
+      setError("Error al agregar el libro a favoritos. Por favor, inténtalo de nuevo.")
+    }
   }
 
+  // elimina libro de favoritos
   const removeFavoriteBook = async (bookKey: string) => {
-    await removeBookFromList(bookKey, "favoritos")
-    await refreshFavoriteBooks()
+    try {
+      await removeBookFromList(bookKey, "favoritos")
+      await refreshFavoriteBooks()
+    } catch (error) {
+      setError("Error al remover el libro de favoritos. Por favor, inténtalo de nuevo.")
+    }
   }
 
+  // actualiza el estado de lectura del libro
   const updateBookReadingStatus = async (bookKey: string, status: ReadingStatus) => {
-    await updateBookStatus(bookKey, status)
-    await refreshFavoriteBooks()
+    try {
+      await updateBookStatus(bookKey, status)
+      await refreshFavoriteBooks()
+    } catch (error) {
+      setError("Error al actualizar el estado de lectura. Por favor, inténtalo de nuevo.")
+    }
+  }
+
+  // logica mara agregar o quitar libro de favorito
+  const toggleFavorite = async (book: Book) => {
+    const isFav = favoriteBooks.some((favBook) => favBook.key === book.key)
+    if (isFav) {
+      await removeFavoriteBook(book.key)
+    } else {
+      await addFavoriteBook(book)
+    }
+  }
+
+  // si es que esta en favoritos
+  const isFavorite = (bookKey: string) => {
+    return favoriteBooks.some((favBook) => favBook.key === bookKey)
+  }
+
+  const clearError = () => {
+    setError(null)
   }
 
   const value = {
@@ -61,8 +108,13 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
     removeFavoriteBook,
     updateBookReadingStatus,
     refreshFavoriteBooks,
+    toggleFavorite,
+    isFavorite,
+    error,
+    clearError,
   }
 
   return <BookContext.Provider value={value}>{children}</BookContext.Provider>
 }
+
 

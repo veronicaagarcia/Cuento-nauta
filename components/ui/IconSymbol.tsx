@@ -7,22 +7,19 @@ import { OpaqueColorValue, StyleProp, ViewStyle } from 'react-native';
 
 // Agrega tus mapeos de SFSymbol a MaterialIcons aquí.
 const MAPPING = {
-  // Ver MaterialIcons aquí: https://icobookns.expo.fyi
-  // Ver SF Symbols en la aplicación SF Symbols en Mac.
   'house.fill': 'home', // Mapea 'house.fill' de SFSymbols a 'home' de MaterialIcons.
   'paperplane.fill': 'send', // Mapea 'paperplane.fill' de SFSymbols a 'send' de MaterialIcons.
-  'chevron.left': 'chevron-left', // Mapea 'chevron.left.forwardslash.chevron.right' de SFSymbols a 'code' de MaterialIcons.
+  'chevron.left': 'chevron-left', // Mapea 'chevron.left' de SFSymbols a 'chevron-left' de MaterialIcons.
   'chevron.right': 'chevron-right', // Mapea 'chevron.right' de SFSymbols a 'chevron-right' de MaterialIcons.
   'book.fill': 'book', // Mapeo del ícono de libro.
-} as Partial<
-  Record<
-    import('expo-symbols').SymbolViewProps['name'],
-    React.ComponentProps<typeof MaterialIcons>['name']
-  >
->;
+  'heart.fill': 'favorite', // Mapea 'heart.fill' de SFSymbols a 'favorite' de MaterialIcons.
+  'favorite': 'favorite', // Asegura que 'favorite' también esté en el mapeo.
+} as const;
+
+type MaterialIconName = keyof typeof MAPPING;
 
 // Define el tipo IconSymbolName basado en las claves de MAPPING.
-export type IconSymbolName = keyof typeof MAPPING;
+export type IconSymbolName = MaterialIconName;
 
 /**
  * Un componente de icono que usa SFSymbols nativos en iOS, y MaterialIcons en Android y web. Esto asegura una apariencia consistente en todas las plataformas y el uso óptimo de recursos.

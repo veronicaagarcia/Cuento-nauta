@@ -4,10 +4,10 @@ import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router' // Stack para la navegacion en pila
 import * as SplashScreen from 'expo-splash-screen' // SplashScreen para manejar la pantalla de carga
 import { StatusBar } from 'expo-status-bar'// StatusBar para manejar la barra de estado
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import 'react-native-reanimated'
-
 import { useColorScheme } from '@/hooks/useColorScheme'// Hook personalizado para obtener el esquema de color
+import { BookProvider } from '@/contexts/BookContext'
 
 // Prevee que la pantalla de carga se esconda automaticamente antes de que se completen la carga de recursos
 SplashScreen.preventAutoHideAsync();
@@ -29,12 +29,14 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <BookProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </BookProvider>
   );
 }
