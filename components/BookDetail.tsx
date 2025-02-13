@@ -1,6 +1,6 @@
 import type React from "react"
 import { useEffect, useState } from "react"
-import { View, ScrollView, Image, StyleSheet, ActivityIndicator, Linking, Text } from "react-native"
+import { View, ScrollView, Image, StyleSheet, ActivityIndicator, Linking, Text, TouchableOpacity } from "react-native"
 import { ThemedText } from "@/components/ThemedText"
 import { getRecommendedBooks, getBookDetails, type ReadingStatus, type Book } from "@/services/api"
 import { ThemedButton } from "@/components/ThemedButton"
@@ -23,6 +23,7 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook}) =>
   const [recommendedBooks, setRecommendedBooks] = useState<Book[]>([])
   const [currentBook, setCurrentBook] = useState<Book>(book)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [isHovered, setIsHovered] = useState(false);
   const arrowColor = useThemeColor({}, "tint")
   const buttonColor = useThemeColor({}, "content")
   const button = useThemeColor({}, "button")
@@ -46,7 +47,6 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook}) =>
         setLoading(false)
       }
     }
-
     fetchData()
   }, [currentBook.key])
 
@@ -115,29 +115,31 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook}) =>
       />
       <br />
       <View style={styles.imageContainer}>
-      {currentBook.cover_i && <Image source={{ uri: currentBook.cover_i }} style={styles.image} />}
+        {currentBook.cover_i && <Image source={{ uri: currentBook.cover_i }} style={styles.image} />}
+        <TouchableOpacity
+          style={[styles.favoriteButton, isHovered ? styles.favoriteButtonHovered : null,]}
+          onPress={handleToggleFavorite}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <Text style={{ color: isFavorite(currentBook.key) ? `red` : `${secondText}` }}>
+            {isFavorite(currentBook.key) ? '❤' : '♡'}
+          </Text>
+          {isHovered && (
+          <Text style={[{color: `${secondText}`}, {position:'absolute'}, {top: 30}, {left:'50%'}, {backgroundColor:'black'}, {transform: [{ translateX: '-50%' }]}, {padding: 3}, {borderRadius: 4}, {fontSize: 8}, {textAlign: 'center'}]}>
+            {isFavorite(currentBook.key) ? 'Borrar de favoritos' : 'Agregar a favoritos'}
+          </Text>
+          )}
+        </TouchableOpacity>
+      </View>
       <View style={styles.titleContainer}>
         <ThemedText darkColor={secondText} lightColor={secondText} type="title">
           {currentBook.title}
         </ThemedText>
-        {/* <ThemedText darkColor={textColor} lightColor={textColor} type="title">
-          -
-        </ThemedText> */}
         <ThemedText darkColor={textColor} lightColor={textColor} type="default">
           de: {currentBook.author_name?.join(", ") || "Autor desconocido"}
         </ThemedText>
       </View>
-
-      <ThemedButton
-        style={styles.favoriteButton}
-        lightColor={isFavorite(currentBook.key)  ? "red" : "transparent"}
-        darkColor={isFavorite(currentBook.key)  ? "red" : "transparent"}
-        textLightColor={secondText}
-            textDarkColor={secondText}
-        onPress={handleToggleFavorite} 
-        title={isFavorite(currentBook.key) ? "❤" : "♡"}      >
-      </ThemedButton>
-</View>
       {currentBook.first_publish_year && (
         <ThemedText type="default" darkColor={textColor} lightColor={textColor} style={styles.publishYear}>
           Publicado en: {currentBook.first_publish_year}
@@ -153,9 +155,8 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook}) =>
           {currentBook.description}
         </ThemedText>
       </View>
-
       <View style={styles.actionContainer}>
-        <ThemedText type="subtitle" style={{ color: arrowColor }}>
+        <ThemedText type="subtitle" style={{ color: button }}>
         Estado de lectura
         </ThemedText>
         <Picker
@@ -173,13 +174,12 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook}) =>
             {saveMessage}
           </ThemedText>
         )}
-
         {loading ? (
-          <ActivityIndicator size="large" color={arrowColor} />
+          <ActivityIndicator size="large" color={button} />
         ) : currentBook.isFullyAccessible && currentBook.previewLink ? (
           <ThemedButton
-            lightColor={arrowColor}
-            darkColor={arrowColor}
+            lightColor={button}
+            darkColor={button}
             textLightColor={textColor}
             textDarkColor={textColor}
             title="Leer en línea"
@@ -191,7 +191,6 @@ const BookDetail: React.FC<BookDetailProps> = ({ book, onBack, onSelectBook}) =>
           </ThemedText>
         )}
       </View>
-
       <ThemedView style={styles.containerAuthor}>
         <ThemedText style={{ color: secondText }} type="subtitle">
           Libros del mismo autor
@@ -274,18 +273,33 @@ const styles = StyleSheet.create({
     width: 200,
     height: 300,
     borderRadius: 8,
-    marginBottom: 16,
+    marginVertical: 16,
+    resizeMode: 'cover'
   },
   favoriteButton: {
     position: "absolute",
-    top: 8,
-    right: 12,
+    top: 20,
+    right: 6,
     width: 25,
     height: 25,
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
   },
+  favoriteButtonHovered: {
+    transform: [{ scale: 1.2 }],
+  },
+  // hoverText: (secondText: string): TextStyle => ({
+  //   position: 'absolute',
+  //   top: 30,
+  //   left: '50%',
+  //   transform: [{ translateX: '-50%' }],
+  //   backgroundColor: secondText,
+  //   padding: 4,
+  //   borderRadius: 4,
+  //   fontSize: 8,
+  //   textAlign: 'center',
+  // }),
 })
 
 export default BookDetail;

@@ -17,7 +17,7 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
   const [error, setError] = useState<string | null>(null)
   const scrollViewRef = useRef<ScrollView>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const borderColor = useThemeColor({}, "tint")
+  const buttonColor = useThemeColor({}, "button")
   const textColor = useThemeColor({}, "text")
 
   useEffect(() => {
@@ -38,7 +38,6 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
         setLoading(false)
       }
     }
-
     fetchFreeBooks()
   }, [])
 
@@ -77,7 +76,7 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
   }
 
   if (loading) {
-    return <ActivityIndicator size="large" color={borderColor} />
+    return <ActivityIndicator size="large" color={buttonColor} />
   }
 
   if (error) {
@@ -91,7 +90,7 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
   if (freeBooks.length === 0) {
     return (
       <ThemedText darkColor={textColor} lightColor={textColor} type="default">
-        No se encontraron libros gratuitos.
+        No se encontraron libros gratuitos
       </ThemedText>
     )
   }
@@ -102,8 +101,8 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
         Libros para leer online
       </ThemedText>
       <View style={styles.carouselContainer}>
-        <TouchableOpacity style={styles.arrowButton} onPress={handlePrevious}>
-          <IconSymbol name="chevron.left" size={24} color={borderColor} />
+        <TouchableOpacity onPress={handlePrevious}>
+          <IconSymbol name="chevron.left" size={24} color={buttonColor} />
         </TouchableOpacity>
         <ScrollView
           ref={scrollViewRef}
@@ -129,13 +128,12 @@ const FreeBookCarousel: React.FC<FreeBookCarouselProps> = ({ onSelectBook }) => 
                 bookKey={book.key}
                 onPress={() => onSelectBook(book)}
                 style={styles.bookItemCard}
-                imageStyle={styles.largeImage}
               />
             </TouchableOpacity>
           ))}
         </ScrollView>
-        <TouchableOpacity style={styles.arrowButton} onPress={handleNext}>
-          <IconSymbol name="chevron.right" size={24} color={borderColor} />
+        <TouchableOpacity onPress={handleNext}>
+          <IconSymbol name="chevron.right" size={24} color={buttonColor} />
         </TouchableOpacity>
       </View>
     </View>
@@ -146,7 +144,6 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
     width: "100%",
-    maxWidth: 800,
     height: "auto",
   },
   title: {
@@ -175,14 +172,6 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: 'center',
     margin: 'auto'
-  },
-  arrowButton: {
-    padding: 10,
-  },
-  largeImage: {
-    width: 160,
-    margin: "auto",
-    height: 210,
   },
 })
 

@@ -13,7 +13,8 @@ export type Book = {
   description?: string;
   isFullyAccessible?: boolean;
   previewLink?: string;
-  readingStatus?: ReadingStatus
+  readingStatus?: ReadingStatus;
+  currentPage?: number;
 };
 export type BookWithStatus = Book & {
   readingStatus?: ReadingStatus;
@@ -40,29 +41,6 @@ const cleanAndFormatDescription = (description: string): string => {
 };
 
 // Busca libros de acuerdo a lo q escriba el usuario en el buscador 
-// export const searchBooks = async (query: string): Promise<Book[]> => {
-
-//   const response = await fetch(
-//     `https://www.googleapis.com/books/v1/volumes?q=${query}&key=${MY_API_KEY}`,
-//   )
-
-//   if (!response.ok) {
-//     throw new Error(`Error en la solicitud: ${response.statusText}`)
-//   }
-//   const data = await response.json()
-
-//   return data.items.map((item: any) => ({
-//     key: item.id,
-//     title: item.volumeInfo.title,
-//     author_name: item.volumeInfo.authors,
-//     cover_i: item.volumeInfo.imageLinks?.thumbnail,
-//     first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
-//     edition_count: item.volumeInfo.industryIdentifiers?.length,
-//     description: cleanAndFormatDescription(item.volumeInfo.description || ""),
-//     isFullyAccessible: item.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
-//     previewLink: item.accessInfo.webReaderLink,
-//   }))
-// }
 export const searchBooks = async (query: string): Promise<Book[]> => {
   const resultsPerPage = 10
   const totalResults = 50
@@ -155,7 +133,6 @@ export const searchBooksReadOnLine = async (): Promise<Book[]> => {
     throw error
   }
 }
-
 
 // Trae mas info como la descripcion del libro
 export const getBookDetails = async (bookId: string): Promise<Book> => {
@@ -260,3 +237,32 @@ export const removeBookFromList = async (bookKey: string, listName: string) => {
     console.error('Error removing book from list:', error);
   }
 };
+
+// Para guardar el numero de pagina en donde te quedaste leyendo un libro
+export const saveCurrentPage = async (bookKey: string, page: number) => {
+  try {
+    const existingList = await AsyncStorage.getItem("favoritos")
+    if (existingList) {
+      const bookList: BookWithStatus[] = JSON.parse(existingList)
+      const updatedList = bookList.map((book) => (book.key === bookKey ? { ...book, currentPage: page } : book))
+      await AsyncStorage.setItem("favoritos", JSON.stringify(updatedList))
+    }
+  } catch (error) {
+    console.error("Error saving current page:", error)
+  }
+}
+
+// Nueva función para obtener la página actual
+export const getCurrentPage = async (bookKey: string): Promise<number | undefined> => {
+  try {
+    const existingList = await AsyncStorage.getItem("favoritos")
+    if (existingList) {
+      const bookList: BookWithStatus[] = JSON.parse(existingList)
+      const book = bookList.find((book) => book.key === bookKey)
+      return book?.currentPage
+    }
+  } catch (error) {
+    console.error("Error getting current page:", error)
+  }
+  return undefined
+}

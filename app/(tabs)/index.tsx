@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    // padding: 8,
   },
   reactLogo: {
     height: 500,
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     fontSize: 18,
+    textAlign: 'center',
     margin: 'auto',
     fontFamily: 'cursive',
     fontStyle: 'italic',

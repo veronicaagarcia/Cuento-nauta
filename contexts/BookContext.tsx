@@ -116,5 +116,3 @@ export const BookProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <BookContext.Provider value={value}>{children}</BookContext.Provider>
 }
-
-

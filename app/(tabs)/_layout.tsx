@@ -33,10 +33,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="myBookList"
         options={{
           title: 'Mis libros',
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="book.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={25} name="favorite" color={color} />,
         }}
       />
     </Tabs>

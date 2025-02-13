@@ -1,13 +1,15 @@
+// Componente principal para la busqueda y visualizacion de libros
+
 "use client" 
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { View, FlatList, ActivityIndicator, StyleSheet } from "react-native"
 import { ThemedText } from "@/components/ThemedText"
 import SearchBar from "./SearchBar"
 import BookItem from "./BookItem"
 import FreeBookCarousel from "./FreeBookCarousel"
-import { searchBooks, getBookDetails, type Book } from "../services/api"
+import { searchBooks, getBookDetails, searchBooksReadOnLine, type Book } from "../services/api"
 import { useThemeColor } from "@/hooks/useThemeColor"
 import BookDetail from "@/components/BookDetail"
 import { useBookContext } from "@/contexts/BookContext"
@@ -24,11 +26,10 @@ const HomeSearchBook: React.FC<HomeSearchBookProps> = ({ initialBook }) => {
   const [hasSearched, setHasSearched] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | null>(initialBook || null)
   const [error, setError] = useState<string | null>(null)
-  
 
   const backgroundColor = useThemeColor({}, "background")
   const textColor = useThemeColor({}, "text")
-  const tint = useThemeColor({}, "tint")
+  const button = useThemeColor({}, "button")
 
   const { addFavoriteBook, removeFavoriteBook } = useBookContext()
 
@@ -38,55 +39,85 @@ const HomeSearchBook: React.FC<HomeSearchBookProps> = ({ initialBook }) => {
     }
   }, [initialBook])
 
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!query.trim()) return
     setLoading(true)
     setHasSearched(true)
     try {
-      const results = await searchBooks(query)
-      setBooks(results)
+      const [regularBooks, onlineBooks] = await Promise.all([searchBooks(query), searchBooksReadOnLine()])
+
+      // Combinar y eliminar duplicados basados en la clave del libro
+      const combinedBooks = [...regularBooks, ...onlineBooks]
+      const uniqueBooks = Array.from(new Map(combinedBooks.map((book) => [book.key, book])).values())
+
+      setBooks(uniqueBooks)
     } catch (error) {
       console.error("Error fetching books:", error)
+      setError("Error al buscar libros. Por favor, inténtalo de nuevo.")
     } finally {
       setLoading(false)
     }
-  }
+  }, [query])
 
-  const handleSelectBook = async (book: Book) => {
+  const handleSelectBook = useCallback(async (book: Book) => {
     setLoading(true)
     try {
       const fullBookDetails = await getBookDetails(book.key)
       setSelectedBook(fullBookDetails)
     } catch (error) {
       console.error("Error fetching book details:", error)
+      setError("Error al obtener detalles del libro. Por favor, inténtalo de nuevo.")
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const handleBackToList = () => {
+  const handleBackToList = useCallback(() => {
     setSelectedBook(null)
-  }
+  }, [])
 
-  const handleAddToFavorites = async (book: Book) => {
-    try {
-      await addFavoriteBook(book)
-      // Puedes agregar aquí alguna notificación o feedback para el usuario
-    } catch (error) {
-      console.error("Error al agregar a favoritos:", error)
-      setError("Error al agregar el libro a favoritos. Por favor, inténtalo de nuevo.")
-    }
-  }
 
-  const handleRemoveFromFavorites = async (bookKey: string) => {
-    try {
-      await removeFavoriteBook(bookKey)
-      // Puedes agregar aquí alguna notificación o feedback para el usuario
-    } catch (error) {
-      console.error("Error al remover de favoritos:", error)
-      setError("Error al remover el libro de favoritos. Por favor, inténtalo de nuevo.")
-    }
-  }
+  const handleAddToFavorites = useCallback(
+    async (book: Book) => {
+      try {
+        await addFavoriteBook(book)
+      } catch (error) {
+        console.error("Error al agregar a favoritos:", error)
+        setError("Error al agregar el libro a favoritos. Por favor, inténtalo de nuevo.")
+      }
+    },
+    [addFavoriteBook],
+  )
+
+  const handleRemoveFromFavorites = useCallback(
+    async (bookKey: string) => {
+      try {
+        await removeFavoriteBook(bookKey)
+      } catch (error) {
+        console.error("Error al remover de favoritos:", error)
+        setError("Error al remover el libro de favoritos. Por favor, inténtalo de nuevo.")
+      }
+    },
+    [removeFavoriteBook],
+  )
+
+  const renderBookItem = useCallback(
+    ({ item }: { item: Book }) => (
+      <BookItem
+        key={item.key}
+        title={item.title}
+        author={item.author_name?.join(", ")}
+        coverUrl={item.cover_i}
+        bookKey={item.key}
+        firstPublishYear={item.first_publish_year}
+        editionCount={item.edition_count}
+        description={item.description}
+        onPress={() => handleSelectBook(item)}
+        style={styles.bookItem}
+      />
+    ),
+    [handleSelectBook],
+  )
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
@@ -113,29 +144,21 @@ const HomeSearchBook: React.FC<HomeSearchBookProps> = ({ initialBook }) => {
           onRemoveFromFavorites={handleRemoveFromFavorites}
         />
       ) : loading ? (
-        <ActivityIndicator size="large" color={tint} />
+        <ActivityIndicator size="large" color={button} accessibilityLabel="Cargando libros" />
       ) : (
         <FlatList
+          contentContainerStyle={styles.bookList}
           data={books}
           keyExtractor={(item) => item.key}
-          renderItem={({ item }) => (
-            <BookItem
-              key={item.key}
-              title={item.title}
-              author={item.author_name?.join(", ")}
-              coverUrl={item.cover_i}
-              bookKey={item.key}
-              firstPublishYear={item.first_publish_year}
-              editionCount={item.edition_count}
-              description={item.description}
-              onPress={() => handleSelectBook(item)}
-            />)}
+          renderItem={renderBookItem}
           ListEmptyComponent={
             <ThemedText type="subtitle" darkColor={textColor} lightColor={textColor} style={styles.emptyText}>
               {hasSearched ? "No se encontraron libros." : "Realiza una búsqueda."}
             </ThemedText>
           }
-        />)}
+          accessibilityLabel="Lista de libros"
+        />
+      )}
     </View>
   )
 }
@@ -146,6 +169,24 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 800,
   },
+  bookList: {
+    display: "flex",
+    marginTop: 8,
+    alignContent: 'center',
+    alignItems: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap:8
+  },
+  bookItem: {
+    flexDirection: "column",
+    marginBottom: 8,
+    minHeight: 400,
+    maxHeight: 400,
+    minWidth: 260,
+    maxWidth: 260,
+  },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
@@ -154,13 +195,6 @@ const styles = StyleSheet.create({
     color: "red",
     textAlign: "center",
     marginTop: 10,
-  },
-  loadingIndicator: {
-    marginVertical: 20,
-  },
-  loadMoreButton: {
-    marginVertical: 20,
-    alignSelf: "center",
   },
   errorContainer: {
     backgroundColor: "rgba(255, 0, 0, 0.1)",
