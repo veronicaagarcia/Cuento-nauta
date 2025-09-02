@@ -1,26 +1,28 @@
-// Definimos el color de resaltado (tint)
-const tintColorLight = '#4682B4';
-const tintColorDark = '#ffcf65';
+import { ModernColors } from './ModernColors';
+
+// Using ModernColors as the base for consistency
+const tintColorLight = ModernColors.primary[500];
+const tintColorDark = ModernColors.primary[400];
 
 export const Colors = {
   light: {
-    text: '#212121',
-    background: '#E0E0E0',
-    button: '#FF7B54',
+    text: ModernColors.neutral[800],
+    background: ModernColors.light.background,
+    button: ModernColors.primary[500],
     tint: tintColorLight,
-    content: '#f9f9f9',
-    icon: '#fff',
-    tabIconDefault: '#000',
+    content: ModernColors.light.surface,
+    icon: ModernColors.neutral[600],
+    tabIconDefault: ModernColors.neutral[400],
     tabIconSelected: tintColorLight,
   },
   dark: {
-    text: '#fffdfa',
-    background: '#212121',
-    button: '#FF7B54',
+    text: ModernColors.dark.text.primary,
+    background: ModernColors.dark.background,
+    button: ModernColors.primary[400],
     tint: tintColorDark,
-    content: '#262626',
-    icon: '#232323',
-    tabIconDefault: '#fff',
+    content: ModernColors.dark.surface,
+    icon: ModernColors.dark.text.secondary,
+    tabIconDefault: ModernColors.dark.text.muted,
     tabIconSelected: tintColorDark,
   },
 };

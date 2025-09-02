@@ -1,26 +1,44 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
+    "name": "Cuento Nauta",
+    "slug": "cuento-nauta",
     "version": "1.0.0",
+    "description": "Descubre, busca y gestiona tus libros favoritos. Encuentra libros gratuitos para leer en línea y lleva control de tu progreso de lectura.",
+    "keywords": ["libros", "lectura", "biblioteca", "ebooks", "books", "reading"],
+    "primaryColor": "#f97316",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "cuentonauta",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "privacy": "public",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#bca5ae"
+        "backgroundColor": "#f97316"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/Logo.png"
+      "favicon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iI2Y5NzMxNiIvPgo8dGV4dCB4PSIxNiIgeT0iMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfk5o8L3RleHQ+Cjwvc3ZnPgo=",
+      "name": "Cuento Nauta - Descubre y gestiona tus libros",
+      "shortName": "Cuento Nauta",
+      "lang": "es-ES",
+      "scope": "/",
+      "startUrl": "/",
+      "display": "standalone",
+      "orientation": "portrait",
+      "themeColor": "#f97316",
+      "backgroundColor": "#ffffff",
+      "meta": {
+        "apple-mobile-web-app-capable": "yes",
+        "apple-mobile-web-app-status-bar-style": "default",
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+      }
     },
     "plugins": [
       "expo-router",
@@ -30,7 +48,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#bca5ae"
+          "backgroundColor": "#f97316"
         }
       ]
     ],

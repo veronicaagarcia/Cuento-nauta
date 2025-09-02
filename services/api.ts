@@ -1,5 +1,63 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MY_API_KEY } from "../config"
+import { MY_API_KEY } from "../config";
+import { 
+  validateSearchQuery, 
+  sanitizeSearchQuery, 
+  validateBookId, 
+  cleanAndFormatDescription as cleanDescription,
+  validatePreviewUrl 
+} from "../utils/validation";
+
+// Function to clean HTML tags and translate common English phrases
+const cleanAndTranslateDescription = (description: string): string => {
+  if (!description || description.trim() === '') {
+    return '';
+  }
+  
+  // Remove HTML tags
+  let cleaned = description.replace(/<[^>]*>/g, '');
+  
+  // Decode HTML entities
+  cleaned = cleaned
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+  
+  // Basic translations for common English phrases
+  const translations = {
+    'From the bestselling author': 'Del autor bestseller',
+    'A New York Times bestseller': 'Un bestseller del New York Times',
+    'The story follows': 'La historia sigue a',
+    'In this novel': 'En esta novela',
+    'A tale of': 'Una historia de',
+    'The main character': 'El personaje principal',
+    'Set in': 'Ambientada en',
+    'This book tells': 'Este libro cuenta',
+    'A story about': 'Una historia sobre',
+    'The author of': 'El autor de',
+    'In this compelling': 'En esta fascinante',
+    'A gripping tale': 'Una historia cautivadora',
+    'From the author': 'Del autor',
+    'Based on': 'Basada en',
+    'An unforgettable': 'Una inolvidable',
+    'The critically acclaimed': 'La aclamada por la crítica'
+  };
+  
+  // Apply basic translations
+  for (const [english, spanish] of Object.entries(translations)) {
+    const regex = new RegExp(english, 'gi');
+    cleaned = cleaned.replace(regex, spanish);
+  }
+  
+  // Clean up extra whitespace
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  
+  return cleaned;
+};
+import { apiCache, batchRequestManager, optimizeImageUrl } from "../utils/performance";
 
 export type ReadingStatus = "Leído" | "Por leer" | "Leyendo"
 export type Book = {
@@ -20,140 +78,239 @@ export type BookWithStatus = Book & {
   readingStatus?: ReadingStatus;
 };
 
-// limpia etiquetas html, espacios en blanco y pone saltos en linea
-const cleanAndFormatDescription = (description: string): string => {
-  // Eliminar todas las etiquetas HTML
-  let cleanText = description.replace(/<\/?[^>]+(>|$)/g, "");
-  
-  // Reemplazar múltiples espacios en blanco por uno solo
-  cleanText = cleanText.replace(/\s+/g, " ");
-  
-  // Eliminar espacios en blanco al principio y al final
-  cleanText = cleanText.trim();
-  
-  // Añadir saltos de línea después de cada oración, pero evitar hacerlo para iniciales como "J. M. Barrie"
-  cleanText = cleanText.replace(/(\b[A-Z]\.) (\b[A-Z]\.)/g, "$1$2"); // Temporalmente eliminar espacio entre iniciales
-  cleanText = cleanText.replace(/(\.[A-Z]\.)/g, "$1##"); // Marcar puntos de iniciales
-  cleanText = cleanText.replace(/(\.[\s\n]+)/g, ".\n\n"); // Añadir saltos de línea después de puntos
-  cleanText = cleanText.replace(/(##)/g, " "); // Restaurar espacio entre iniciales
-  
-  return cleanText;
+// Helper function to transform API response to Book object
+const transformBookData = (item: any): Book => {
+  return {
+    key: item.id,
+    title: item.volumeInfo.title || 'Título no disponible',
+    author_name: item.volumeInfo.authors || [],
+    cover_i: optimizeImageUrl(item.volumeInfo.imageLinks?.thumbnail),
+    first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
+    edition_count: item.volumeInfo.industryIdentifiers?.length,
+    description: cleanDescription(item.volumeInfo.description || ""),
+    isFullyAccessible: item.accessInfo?.accessViewStatus === "FULL_PUBLIC_DOMAIN",
+    previewLink: validatePreviewUrl(item.accessInfo?.webReaderLink || '') ? item.accessInfo.webReaderLink : undefined,
+  };
 };
 
-// Busca libros de acuerdo a lo q escriba el usuario en el buscador 
-export const searchBooks = async (query: string): Promise<Book[]> => {
-  const resultsPerPage = 10
-  const totalResults = 50
-  const orderBy = "relevance"
-  let books: Book[] = []
-
-  try {
-    for (let startIndex = 0; startIndex < totalResults; startIndex += resultsPerPage) {
-      const response = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=${resultsPerPage}&startIndex=${startIndex}&orderBy=${orderBy}&key=${MY_API_KEY}`,
-      )
-
-      if (!response.ok) {
-        throw new Error(`Error en la solicitud: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-      if (!data.items || data.items.length === 0) {
-        console.warn("No se encontraron más libros en esta página de resultados")
-        break // Salimos del bucle si no hay más resultados
-      }
-
-      const fetchedBooks = data.items.map((item: any) => ({
-        key: item.id,
-        title: item.volumeInfo.title,
-        author_name: item.volumeInfo.authors,
-        cover_i: item.volumeInfo.imageLinks?.thumbnail,
-        first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
-        edition_count: item.volumeInfo.industryIdentifiers?.length,
-        description: cleanAndFormatDescription(item.volumeInfo.description || ""),
-        isFullyAccessible: item.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
-        previewLink: item.accessInfo.webReaderLink,
-      }))
-
-      books = [...books, ...fetchedBooks]
-    }
-
-    console.log(`Total de libros encontrados: ${books.length}`)
-    return books
-  } catch (error) {
-    console.error("Error al buscar libros para leer en línea:", error)
-    throw error
+// Optimized book search with validation, caching, and better error handling
+export const searchBooks = async (query: string, maxResults: number = 20): Promise<Book[]> => {
+  // Input validation
+  if (!validateSearchQuery(query)) {
+    throw new Error('Consulta de búsqueda inválida. Debe tener entre 2 y 100 caracteres.');
   }
 
-}
-
-// busca por leer on line
-export const searchBooksReadOnLine = async (): Promise<Book[]> => {
-  const resultsPerPage = 40
-  const totalResults = 120
-  const query = "subject:fiction" // Cambiamos la consulta para obtener libros de ficción
-  const orderBy = "relevance" // Mantenemos el orden por relevancia
-  let books: Book[] = []
-
-  try {
-    for (let startIndex = 0; startIndex < totalResults; startIndex += resultsPerPage) {
-      const response = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=${resultsPerPage}&startIndex=${startIndex}&filter=free-ebooks&orderBy=${orderBy}&printType=books&key=${MY_API_KEY}`,
-      )
-
-      if (!response.ok) {
-        throw new Error(`Error en la solicitud: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-      if (!data.items || data.items.length === 0) {
-        console.warn("No se encontraron más libros en esta página de resultados")
-        break // Salimos del bucle si no hay más resultados
-      }
-
-      const fetchedBooks = data.items.map((item: any) => ({
-        key: item.id,
-        title: item.volumeInfo.title,
-        author_name: item.volumeInfo.authors,
-        cover_i: item.volumeInfo.imageLinks?.thumbnail,
-        first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
-        edition_count: item.volumeInfo.industryIdentifiers?.length,
-        description: cleanAndFormatDescription(item.volumeInfo.description || ""),
-        isFullyAccessible: item.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
-        previewLink: item.accessInfo.webReaderLink,
-      }))
-
-      books = [...books, ...fetchedBooks]
-    }
-
-    console.log(`Total de libros encontrados: ${books.length}`)
-    return books
-  } catch (error) {
-    console.error("Error al buscar libros para leer en línea:", error)
-    throw error
-  }
-}
-
-// Trae mas info como la descripcion del libro
-export const getBookDetails = async (bookId: string): Promise<Book> => {
-  const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${bookId}?key=${MY_API_KEY}`);
-
-  if (!response.ok) {
-    throw new Error(`Error en la solicitud: ${response.statusText}`);
-  }
-  const data = await response.json();
+  const sanitizedQuery = sanitizeSearchQuery(query);
+  const cacheKey = `search_${sanitizedQuery}_${maxResults}`;
   
-  return {
-    key: data.id,
-    title: data.volumeInfo.title,
-    author_name: data.volumeInfo.authors,
-    cover_i: data.volumeInfo.imageLinks?.thumbnail,
-    first_publish_year: data.volumeInfo.publishedDate?.slice(0, 4),
-    edition_count: data.volumeInfo.industryIdentifiers?.length,
-    description: cleanAndFormatDescription(data.volumeInfo.description || ''),
-    isFullyAccessible: data.accessInfo.accessViewStatus === "FULL_PUBLIC_DOMAIN",
-    previewLink: data.accessInfo.webReaderLink,
-  };
+  // Check cache first
+  const cachedResult = apiCache.get(cacheKey);
+  if (cachedResult) {
+    return cachedResult;
+  }
+
+  const resultsPerPage = 10;
+  const orderBy = "relevance";
+  let books: Book[] = [];
+
+  try {
+    // Limit concurrent requests to avoid rate limiting
+    const totalPages = Math.min(Math.ceil(maxResults / resultsPerPage), 5); // Max 5 pages
+    
+    const requests = Array.from({ length: totalPages }, (_, index) => {
+      const startIndex = index * resultsPerPage;
+      return () => fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(sanitizedQuery)}&maxResults=${resultsPerPage}&startIndex=${startIndex}&orderBy=${orderBy}&key=${MY_API_KEY}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+          },
+          // Add timeout
+          signal: AbortSignal.timeout(10000), // 10 second timeout
+        }
+      );
+    });
+
+    // Process requests with batch manager to avoid overwhelming the API
+    const responses = await Promise.allSettled(
+      requests.map(request => batchRequestManager.add(request))
+    );
+
+    for (const response of responses) {
+      if (response.status === 'fulfilled' && response.value.ok) {
+        const data = await response.value.json();
+        
+        if (data.items && Array.isArray(data.items)) {
+          const fetchedBooks = data.items
+            .filter((item: any) => item?.id && item?.volumeInfo?.title) // Basic validation
+            .map(transformBookData);
+          
+          books.push(...fetchedBooks);
+        }
+      }
+    }
+
+    // Remove duplicates based on book key
+    const uniqueBooks = books.filter((book, index, self) => 
+      index === self.findIndex(b => b.key === book.key)
+    );
+
+    // Limit results to requested amount
+    const limitedBooks = uniqueBooks.slice(0, maxResults);
+
+    // Cache the result
+    apiCache.set(cacheKey, limitedBooks);
+
+    return limitedBooks;
+    
+  } catch (error) {
+    console.error("Error al buscar libros:", error);
+    
+    if (error instanceof Error) {
+      if (error.name === 'TimeoutError') {
+        throw new Error('La búsqueda tardó demasiado. Por favor, intenta de nuevo.');
+      }
+      if (error.message.includes('Network')) {
+        throw new Error('Error de conexión. Verifica tu conexión a internet.');
+      }
+    }
+    
+    throw new Error('Error al buscar libros. Por favor, intenta de nuevo.');
+  }
+};
+
+// Enhanced function for featured books with multiple fallbacks
+export const searchBooksReadOnLine = async (): Promise<Book[]> => {
+  if (!MY_API_KEY) {
+    throw new Error('API key no configurada');
+  }
+
+  // Multiple search strategies for novels and popular fiction
+  const searchQueries = [
+    // Popular novels in Spanish
+    `q=novela+ficción&langRestrict=es&maxResults=15&orderBy=relevance&printType=books`,
+    // Bestseller fiction books
+    `q=fiction+bestseller+-thesis+-research+-academic&maxResults=15&orderBy=relevance&printType=books`,
+    // Popular novels
+    `q=novel+popular+-dissertation+-academic+-research&maxResults=15&orderBy=relevance&printType=books`,
+    // Classic literature
+    `q=literatura+clásica&langRestrict=es&maxResults=15&orderBy=relevance&printType=books`,
+    // Popular fiction authors
+    `q=inauthor:"Stephen King" OR inauthor:"Paulo Coelho" OR inauthor:"Dan Brown"&maxResults=15&orderBy=relevance&printType=books`
+  ];
+
+  for (let i = 0; i < searchQueries.length; i++) {
+    try {
+      console.log(`Intentando búsqueda ${i + 1}/${searchQueries.length}`);
+      
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?${searchQueries[i]}&key=${MY_API_KEY}`
+      );
+
+      if (!response.ok) {
+        console.warn(`Error en búsqueda ${i + 1}: ${response.status}`);
+        continue;
+      }
+
+      const data = await response.json();
+      
+      if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+        const books = data.items
+          .filter((item: any) => 
+            item?.id && 
+            item?.volumeInfo?.title &&
+            item?.volumeInfo?.imageLinks?.thumbnail // Prefer books with covers
+          )
+          .filter((item: any) => {
+            const title = item.volumeInfo?.title?.toLowerCase() || '';
+            const description = item.volumeInfo?.description?.toLowerCase() || '';
+            const authors = item.volumeInfo?.authors?.join(' ')?.toLowerCase() || '';
+            const categories = item.volumeInfo?.categories?.join(' ')?.toLowerCase() || '';
+            
+            // Exclude academic/research documents
+            const academicTerms = [
+              'dissertation', 'thesis', 'phd', 'research', 'academic', 'university',
+              'journal', 'proceedings', 'conference', 'study', 'analysis', 'doctoral',
+              'master', 'bachelor', 'degree', 'paper', 'article', 'essay', 'report',
+              'tesis', 'investigación', 'académico', 'universidad', 'estudio', 'análisis'
+            ];
+            
+            const hasAcademicTerms = academicTerms.some(term => 
+              title.includes(term) || description.includes(term) || 
+              authors.includes(term) || categories.includes(term)
+            );
+            
+            // Only include fiction, novels, and popular books
+            const fictionTerms = [
+              'fiction', 'novel', 'story', 'tale', 'romance', 'mystery', 'thriller',
+              'fantasy', 'adventure', 'drama', 'literature', 'classic',
+              'ficción', 'novela', 'historia', 'cuento', 'literatura', 'clásico'
+            ];
+            
+            const isFiction = fictionTerms.some(term => 
+              title.includes(term) || description.includes(term) || categories.includes(term)
+            );
+            
+            return !hasAcademicTerms && (isFiction || !categories.includes('education'));
+          })
+          .map((item: any) => ({
+            key: item.id,
+            title: item.volumeInfo.title,
+            author_name: item.volumeInfo.authors || ['Autor desconocido'],
+            cover_i: item.volumeInfo.imageLinks?.thumbnail,
+            first_publish_year: item.volumeInfo.publishedDate?.slice(0, 4),
+            edition_count: item.volumeInfo.printedPageCount || undefined,
+            description: cleanAndTranslateDescription(item.volumeInfo.description || ""),
+            isFullyAccessible: item.accessInfo?.accessViewStatus === "FULL_PUBLIC_DOMAIN" || 
+                              item.accessInfo?.webReaderLink,
+            previewLink: item.accessInfo?.webReaderLink || item.volumeInfo?.previewLink,
+          }))
+          .slice(0, 12); // Ensure we get max 12 books
+
+        console.log(`✅ Encontrados ${books.length} libros con estrategia ${i + 1}`);
+        return books;
+      }
+    } catch (error) {
+      console.warn(`Error en estrategia ${i + 1}:`, error);
+      continue;
+    }
+  }
+
+  // If all strategies fail, return empty array
+  console.warn("No se pudieron cargar libros con ninguna estrategia");
+  return [];
+};
+
+// Simplified book details function
+export const getBookDetails = async (bookId: string): Promise<Book> => {
+  if (!MY_API_KEY) {
+    throw new Error('API key no configurada');
+  }
+
+  try {
+    const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${bookId}?key=${MY_API_KEY}`);
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      key: data.id,
+      title: data.volumeInfo?.title || 'Título no disponible',
+      author_name: data.volumeInfo?.authors || [],
+      cover_i: data.volumeInfo?.imageLinks?.thumbnail || undefined,
+      first_publish_year: data.volumeInfo?.publishedDate?.slice(0, 4) || undefined,
+      edition_count: data.volumeInfo?.printedPageCount || undefined,
+      description: cleanAndTranslateDescription(data.volumeInfo?.description || ''),
+      isFullyAccessible: data.accessInfo?.accessViewStatus === "FULL_PUBLIC_DOMAIN" || false,
+      previewLink: data.accessInfo?.webReaderLink || undefined,
+    };
+  } catch (error) {
+    console.error('Error al obtener detalles del libro:', error);
+    throw new Error(error instanceof Error ? error.message : 'Error al obtener detalles del libro');
+  }
 };
 
 // Trae los libros del mismo autor del libro q se selecciono

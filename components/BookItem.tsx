@@ -58,9 +58,11 @@ const BookItem: React.FC<BookItemProps> = ({ title, author, coverUrl, bookKey, d
                 {isFavorite(bookKey) ? '❤' : '♡'}
               </Text>
                 {isHovered && (
-              <Text style={[{color: `${secondText}`}, {position:'absolute'}, {top: 30}, {left:'70%'}, {backgroundColor:'black'}, {transform: [{ translateX: '-50%' }]}, {padding: 3}, {borderRadius: 4}, {fontSize: 8}, {textAlign: 'center'}]}>
-                {isFavorite(bookKey) ? 'Borrar de favoritos' : 'Agregar a favoritos'}
-              </Text>
+              <View style={styles.tooltip}>
+                <Text style={styles.tooltipText}>
+                  {isFavorite(bookKey) ? 'Quitar' : 'Agregar'}
+                </Text>
+              </View>
             )}
             </TouchableOpacity>
         </View>
@@ -81,9 +83,8 @@ const BookItem: React.FC<BookItemProps> = ({ title, author, coverUrl, bookKey, d
 const styles = StyleSheet.create({
   ViewShadow: {
     flexDirection: "row",
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 'auto',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     borderRadius: 8,
     padding: 10,
     shadowColor: "#000",
@@ -96,11 +97,11 @@ const styles = StyleSheet.create({
     elevation: 5,
     width: "100%",
     maxWidth: 380,
-    height: "auto",
+    minHeight: 200,
   },
   imageContainer: {
     position: "relative",
-    margin: 'auto',
+    marginRight: 10,
   },
   image: {
     width: 140,
@@ -119,6 +120,7 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    flexDirection: 'column',
     justifyContent: 'center',
     padding: 10,
   },
@@ -134,6 +136,21 @@ const styles = StyleSheet.create({
   },
   favoriteButtonHovered: {
     transform: [{ scale: 1.2 }],
+  },
+  tooltip: {
+    position: 'absolute',
+    top: 30,
+    left: -10,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 4,
+    minWidth: 50,
+  },
+  tooltipText: {
+    color: 'white',
+    fontSize: 10,
+    textAlign: 'center',
   },
 });
 
