@@ -4,7 +4,10 @@
       "Bash(npm start)",
       "Bash(npx kill-port:*)",
       "Bash(npx expo install:*)",
-      "Bash(npx expo start:*)"
+      "Bash(npx expo start:*)",
+      "Bash(copy:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
