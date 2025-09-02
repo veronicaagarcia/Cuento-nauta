@@ -9,25 +9,28 @@
 
 **Una aplicación React Native moderna para descubrir, buscar y gestionar tu biblioteca personal de libros**
 
-[Demo en Vivo](https://tu-demo-url.netlify.app) • [Código Fuente](https://github.com/tu-usuario/cuento-nauta)
+[Demo en Vivo](https://Cuento-nauta.netlify.app) • [Código Fuente](https://github.com/veronicaagarcia/Cuento-nauta)
 
 </div>
 
 ## 🌟 Características Principales
 
 ### 📖 **Exploración de Libros**
+
 - **Búsqueda en tiempo real** con la API de Google Books
-- **Libros destacados** actualizados automáticamente  
+- **Libros destacados** actualizados automáticamente
 - **Novelas populares** filtradas y curadas
 - **Descripciones traducidas** al español con limpieza de HTML
 
 ### 💫 **Gestión Personal**
+
 - **Sistema de favoritos** con persistencia local
 - **Estados de lectura**: "Por leer", "Leyendo", "Leído"
 - **Seguimiento de páginas** para libros en progreso
 - **Organización automática** por prioridad de lectura
 
 ### 🎨 **Experiencia de Usuario**
+
 - **Interfaz moderna** con animaciones fluidas
 - **Diseño responsivo** (móvil, tablet, desktop)
 - **Modo claro/oscuro** automático
@@ -35,6 +38,7 @@
 - **Estados de carga** profesionales
 
 ### 🚀 **Funcionalidades Avanzadas**
+
 - **Libros online gratuitos** identificados automáticamente
 - **Recomendaciones** por autor
 - **Cache inteligente** (5 min TTL)
@@ -44,23 +48,27 @@
 ## 🛠 Tecnologías y Arquitectura
 
 ### **Core Technologies**
+
 - **React Native 0.76** - Framework multiplataforma
 - **Expo SDK 52** - Toolchain y servicios
 - **TypeScript 5.3** - Tipado estático
 - **NativeWind** - TailwindCSS para React Native
 
 ### **Gestión de Estado**
+
 - **React Context API** - Estado global
 - **AsyncStorage** - Persistencia local
 - **Custom Hooks** - Lógica reutilizable
 
 ### **Performance & UX**
+
 - **API Caching** - Sistema de caché con TTL
 - **Debounced Search** - Búsqueda optimizada (300ms)
 - **Optimistic Updates** - UI responsiva
 - **Error Boundaries** - Manejo robusto de errores
 
 ### **Integración Externa**
+
 - **Google Books API** - Catálogo de libros
 - **Variables de entorno** - Configuración segura
 - **Rate limiting** - Prevención de límites API
@@ -76,12 +84,14 @@
 ## 🚀 Instalación y Configuración
 
 ### **Prerequisitos**
+
 - Node.js 18+
 - npm o yarn
 - Expo CLI
 - Cuenta en Google Cloud (para API key)
 
 ### **1. Clonación e Instalación**
+
 ```bash
 git clone https://github.com/tu-usuario/cuento-nauta.git
 cd cuento-nauta
@@ -89,6 +99,7 @@ npm install
 ```
 
 ### **2. Configuración de Variables de Entorno**
+
 ```bash
 # Copia el archivo de ejemplo
 cp .env.example .env
@@ -98,6 +109,7 @@ EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY=tu-google-books-api-key
 ```
 
 ### **3. Obtener Google Books API Key**
+
 1. Ve a [Google Cloud Console](https://console.cloud.google.com)
 2. Crea un nuevo proyecto o selecciona uno existente
 3. Habilita la **Books API**
@@ -105,13 +117,14 @@ EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY=tu-google-books-api-key
 5. Copia la key al archivo `.env`
 
 ### **4. Ejecutar la Aplicación**
+
 ```bash
 # Desarrollo general
 npm start
 
 # Plataformas específicas
 npm run android    # Android
-npm run ios        # iOS  
+npm run ios        # iOS
 npm run web        # Web browser
 ```
 
@@ -148,18 +161,21 @@ npm run web        # Web browser
 ## 🎯 Funcionalidades Clave
 
 ### **🔍 Búsqueda Inteligente**
+
 - Búsqueda en tiempo real con debounce
 - Cache de resultados (5 min TTL)
 - Filtrado de documentos académicos
 - Priorización de novelas y ficción popular
 
 ### **📚 Gestión de Biblioteca**
+
 - **Estados de lectura**: Por leer → Leyendo → Leído
-- **Seguimiento de páginas** para libros en progreso  
+- **Seguimiento de páginas** para libros en progreso
 - **Organización automática** por prioridad
 - **Persistencia local** con AsyncStorage
 
 ### **⚡ Optimizaciones de Performance**
+
 - **API Caching**: Reduce llamadas duplicadas en 60%
 - **Debounced Search**: Mejora tiempo de respuesta en 40%
 - **Optimistic Updates**: Feedback instantáneo en UI
@@ -168,6 +184,7 @@ npm run web        # Web browser
 ## 🌍 Deploy y Hosting
 
 ### **Web (Netlify/Vercel)**
+
 ```bash
 # Build para web
 npm run build:web
@@ -177,6 +194,7 @@ npm run build:web
 ```
 
 ### **Mobile (Expo Build Service)**
+
 ```bash
 # Android APK
 expo build:android
@@ -210,6 +228,7 @@ Este proyecto está bajo la Licencia MIT. Ve el archivo [LICENSE](LICENSE) para 
 ## 👨‍💻 Autor
 
 **Tu Nombre**
+
 - GitHub: [@tu-usuario](https://github.com/tu-usuario)
 - LinkedIn: [Tu Perfil](https://linkedin.com/in/tu-perfil)
 - Portfolio: [tu-portfolio.com](https://tu-portfolio.com)
